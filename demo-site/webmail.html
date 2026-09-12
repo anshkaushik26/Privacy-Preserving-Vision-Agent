@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>M Mail</title>
+<link rel="stylesheet" href="webmail.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">☰ &nbsp;<b>M</b> Mail</div>
+  <div class="searchbar">🔍 &nbsp;Search mail</div>
+  <div class="avatar">A</div>
+  <span class="account-hint">alex.johnson@example.com</span>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <button class="compose-btn" id="compose-open" onclick="openCompose()">✏️ Compose</button>
+    <div class="folder active">Inbox <span class="count">4</span></div>
+    <div class="folder">Starred</div>
+    <div class="folder">Snoozed</div>
+    <div class="folder">Sent</div>
+    <div class="folder">Drafts</div>
+  </div>
+
+  <div class="inbox" id="inbox">
+    <div class="row" onclick="openEmail(this)">
+      <span class="star">☆</span>
+      <span class="sender">Salit Kulla</span>
+      <span class="subject-line"><b>Trip to Cairngorms National Park</b> — <span class="snippet">Planning for a trip in July. Are you interested in joining?</span></span>
+      <span class="time">10:15 AM</span>
+    </div>
+    <div class="row" onclick="openEmail(this)">
+      <span class="star">☆</span>
+      <span class="sender">Brianna, John</span>
+      <span class="subject-line"><b>Surf Sunday?</b> — <span class="snippet">Great, let's meet at Jack's at 8am then.</span></span>
+      <span class="time">10:00 AM</span>
+    </div>
+    <div class="row" onclick="openEmail(this)">
+      <span class="star">☆</span>
+      <span class="sender">Luis, me, Anastasia</span>
+      <span class="subject-line"><b>Best Japanese restaurants</b> — <span class="snippet">Call me at 415-555-0199 if you want to carpool over.</span></span>
+      <span class="time">Sep 5</span>
+    </div>
+    <div class="row" onclick="openEmail(this)">
+      <span class="star">☆</span>
+      <span class="sender">Daniel Vickery</span>
+      <span class="subject-line"><b>Book Club</b> — <span class="snippet">My email is daniel.v@example.com if easier to reach directly.</span></span>
+      <span class="time">Sep 5</span>
+    </div>
+    <div class="row read" onclick="openEmail(this)">
+      <span class="star">★</span>
+      <span class="sender">Nick Kortendick</span>
+      <span class="subject-line"><b>Work</b> — Presentation slides for Thursday are attached, take a look</span>
+      <span class="time">Sep 4</span>
+    </div>
+    <div class="row read" onclick="openEmail(this)">
+      <span class="star">☆</span>
+      <span class="sender">Tim Greer</span>
+      <span class="subject-line"><b>Work</b> — Bus schedule changed for the offsite next week</span>
+      <span class="time">Sep 4</span>
+    </div>
+    <div class="row" onclick="openEmail(this)">
+      <span class="star">☆</span>
+      <span class="sender">Karen, Meredith, James</span>
+      <span class="subject-line"><b>Hiking this weekend</b> — <span class="snippet">Cabin deposit went through on card 4111 1111 1111 1111, receipt attached.</span></span>
+      <span class="time">Sep 3</span>
+    </div>
+    <div class="row read" onclick="openEmail(this)">
+      <span class="star">☆</span>
+      <span class="sender">Anissa, Meredith, James</span>
+      <span class="subject-line"><b>Mike's surprise party</b> — Let's keep the group chat quiet until Friday</span>
+      <span class="time">Sep 3</span>
+    </div>
+    <div class="row" onclick="openEmail(this)">
+      <span class="star">☆</span>
+      <span class="sender">Song Chi</span>
+      <span class="subject-line"><b>Cooking class signup</b> — <span class="snippet">They asked for an ID number on the form: 123-45-6789.</span></span>
+      <span class="time">Sep 2</span>
+    </div>
+    <div class="row read" onclick="openEmail(this)">
+      <span class="star">☆</span>
+      <span class="sender">Cameron, Tyler, Dylan</span>
+      <span class="subject-line"><b>Pictures from the trip</b> — 📷 IMG_0392.jpg</span>
+      <span class="time">Sep 1</span>
+    </div>
+    <div class="row read" onclick="openEmail(this)">
+      <span class="star">☆</span>
+      <span class="sender">Mizra Sato</span>
+      <span class="subject-line">My roadtrip playlist — Finally finished it, give it a listen</span>
+      <span class="time">Aug 30</span>
+    </div>
+  </div>
+</div>
+
+<div class="compose-panel" id="compose-panel">
+  <div class="compose-header">
+    <span id="compose-title">New Message</span>
+    <button onclick="closeCompose()" aria-label="Close">✕</button>
+  </div>
+  <div class="compose-field">
+    <input id="compose-to" type="email" placeholder="Recipients" autocomplete="off" />
+  </div>
+  <div class="compose-field">
+    <input id="compose-subject" type="text" placeholder="Subject" autocomplete="off" />
+  </div>
+  <textarea class="compose-body" id="compose-body" placeholder="Compose email"></textarea>
+  <div class="compose-footer">
+    <button class="send-btn" id="compose-send" onclick="sendEmail()">Send</button>
+  </div>
+</div>
+
+<div class="sent-toast" id="sent-toast">Message sent.</div>
+
+<script>
+function openCompose() {
+  document.getElementById("compose-panel").classList.add("open");
+  document.getElementById("compose-to").focus();
+}
+function closeCompose() {
+  document.getElementById("compose-panel").classList.remove("open");
+}
+function openEmail(el) {
+  el.classList.add("read");
+}
+function sendEmail() {
+  document.getElementById("compose-to").value = "";
+  document.getElementById("compose-subject").value = "";
+  document.getElementById("compose-body").value = "";
+  closeCompose();
+  const toast = document.getElementById("sent-toast");
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2500);
+}
+</script>
+</body>
+</html>

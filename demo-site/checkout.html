@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Demo Bank — Checkout</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="card">
+  <nav class="steps"><span>1. Login</span><span>2. Profile</span><span class="active">3. Checkout</span></nav>
+  <h1>Confirm payment</h1>
+  <p class="subtitle">1x Annual Plan — $49.00</p>
+
+  <form id="checkout-form" onsubmit="document.getElementById('checkout-form').style.display='none'; document.getElementById('checkout-success').style.display='block'; return false;">
+    <label for="cardname">Name on card</label>
+    <input id="cardname" name="cardname" type="text" autocomplete="cc-name" placeholder="Alex Johnson" required />
+
+    <label for="cardnumber">Card number</label>
+    <input id="cardnumber" name="cardnumber" type="text" autocomplete="cc-number" placeholder="4111 1111 1111 1111" required />
+
+    <div class="field-row">
+      <div>
+        <label for="expiry">Expiry</label>
+        <input id="expiry" name="expiry" type="text" autocomplete="cc-exp" placeholder="MM/YY" required />
+      </div>
+      <div>
+        <label for="cvc">CVC</label>
+        <input id="cvc" name="cvc" type="text" autocomplete="cc-csc" placeholder="123" required />
+      </div>
+    </div>
+
+    <button class="primary" type="submit" id="pay-submit">Pay $49.00</button>
+  </form>
+
+  <div id="checkout-success" class="success" style="display:none">
+    <div class="checkmark">✅</div>
+    <h1>Payment complete</h1>
+    <p class="subtitle">Task finished — the agent completed login → profile → checkout.</p>
+  </div>
+</div>
+</body>
+</html>

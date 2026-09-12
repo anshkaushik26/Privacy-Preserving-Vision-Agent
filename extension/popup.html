@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Privacy Agent</title>
+<style>
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 14px;
+    background: #16181d;
+    color: #e6e8eb;
+    font-size: 13px;
+  }
+  h1 { font-size: 14px; margin: 0 0 10px; }
+  label { display: block; font-size: 11px; color: #9aa0a8; margin: 10px 0 4px; }
+  input, textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: #23262d;
+    border: 1px solid #383c44;
+    color: #e6e8eb;
+    border-radius: 6px;
+    padding: 7px 9px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 54px; }
+  button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 9px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { background: #1d4ed8; }
+  #log {
+    margin-top: 14px;
+    background: #0e1013;
+    border: 1px solid #2a2d33;
+    border-radius: 6px;
+    padding: 8px;
+    height: 260px;
+    overflow-y: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .line { border-bottom: 1px solid #1c1f24; padding: 3px 0; }
+  .hint { color: #7c828a; font-size: 10.5px; margin-top: 8px; }
+  #summary {
+    margin-top: 14px;
+    background: #1b1e24;
+    border: 1px solid #2a2d33;
+    border-radius: 6px;
+    padding: 10px 6px;
+    display: flex;
+  }
+  #summary.empty {
+    color: #7c828a;
+    font-size: 11.5px;
+    font-style: italic;
+    padding: 10px 12px;
+  }
+  .summary-stat {
+    flex: 1;
+    text-align: center;
+    padding: 0 4px;
+    border-right: 1px solid #2a2d33;
+  }
+  .summary-stat:last-child { border-right: none; }
+  .summary-stat .value { font-size: 16px; font-weight: 700; color: #e6e8eb; }
+  .summary-stat .label {
+    font-size: 9.5px;
+    color: #9aa0a8;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+</style>
+</head>
+<body>
+  <h1>Privacy-Preserving Vision Agent</h1>
+
+  <label for="server-url">Agent server URL (not the page you're testing)</label>
+  <input id="server-url" type="text" value="http://127.0.0.1:8787/agent/step" placeholder="http://127.0.0.1:8787/agent/step" />
+
+  <label for="task">Task</label>
+  <textarea id="task" placeholder="e.g. Sign in, then continue to profile and checkout.">Sign in with the email test@example.com, then continue through profile to checkout.</textarea>
+
+  <button id="run">Run task</button>
+  <p class="hint">Run this on the demo site (localhost). Password / card fields must be filled by you — the agent never sees or fills them.</p>
+
+  <div id="summary" class="empty">No task run yet</div>
+
+  <div id="log"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

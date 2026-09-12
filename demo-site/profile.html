@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Demo Bank — Profile</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="card">
+  <nav class="steps"><span>1. Login</span><span class="active">2. Profile</span><span>3. Checkout</span></nav>
+  <img class="profile-photo" src="assets/profile-photo.jpg" alt="Profile photo" />
+  <h1 style="text-align:center">Alex Johnson</h1>
+  <p class="subtitle" style="text-align:center">alex.johnson@example.com</p>
+
+  <label for="phone">Phone number</label>
+  <input id="phone" name="phone" type="tel" autocomplete="tel" value="+1 415-555-0182" readonly />
+
+  <label for="ssn">Government ID</label>
+  <input id="ssn" name="ssn" type="text" autocomplete="off" value="123-45-6789" readonly />
+
+  <a href="checkout.html" id="continue-link" style="text-decoration:none">
+    <button class="primary" type="button">Continue to checkout</button>
+  </a>
+</div>
+</body>
+</html>

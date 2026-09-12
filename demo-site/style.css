@@ -1,0 +1,99 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --border: #d9dce1;
+  --text: #1f2430;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  padding: 48px 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+h1 { font-size: 20px; margin: 0 0 4px; }
+.subtitle { color: var(--muted); font-size: 13px; margin: 0 0 24px; }
+
+label { display: block; font-size: 13px; font-weight: 600; margin: 16px 0 6px; }
+
+input, select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: var(--text);
+}
+
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+button.primary {
+  width: 100%;
+  margin-top: 24px;
+  padding: 11px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.primary:hover { background: var(--accent-hover); }
+
+nav.steps {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+nav.steps .active { color: var(--accent); font-weight: 700; }
+
+.profile-photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 16px;
+  border: 1px solid var(--border);
+}
+
+.field-row { display: flex; gap: 12px; }
+.field-row > div { flex: 1; }
+
+.hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+.success {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.success .checkmark {
+  font-size: 40px;
+  margin-bottom: 8px;
+}

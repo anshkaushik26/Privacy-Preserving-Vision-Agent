@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Demo Bank — Sign in</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="card">
+  <nav class="steps"><span class="active">1. Login</span><span>2. Profile</span><span>3. Checkout</span></nav>
+  <h1>Welcome back</h1>
+  <p class="subtitle">Sign in to continue to your account.</p>
+
+  <form id="login-form" autocomplete="on" onsubmit="window.location.href='profile.html'; return false;">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+
+    <button class="primary" type="submit" id="login-submit">Sign in</button>
+  </form>
+  <p class="hint">This is a local mock site used only to demo the privacy-preserving agent. No real accounts.</p>
+</div>
+</body>
+</html>
