@@ -8,7 +8,11 @@
 // than re-implementing PII patterns here.
 importScripts("redact.js");
 
-const DEFAULT_SERVER_URL = "http://127.0.0.1:8787/agent/step";
+// Deployed Cloud Run server (project waitlisted171, region asia-south1).
+const DEFAULT_SERVER_URL = "https://tse-agent-325101929824.asia-south1.run.app/agent/step";
+
+// Must match AGENT_SHARED_SECRET set on the server via `gcloud run deploy`.
+const AGENT_SHARED_SECRET = "4cb614a7dc1b47d281a50007cc93f336339554effbfc1bf0";
 const MAX_STEPS = 12;
 const STEP_DELAY_MS = 400;
 
@@ -161,9 +165,11 @@ function sendTaskSummary(stats) {
 }
 
 async function callServer(serverUrl, task, screen, history) {
+  const headers = { "Content-Type": "application/json" };
+  if (AGENT_SHARED_SECRET) headers["X-Agent-Secret"] = AGENT_SHARED_SECRET;
   const resp = await fetch(serverUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ task, screen, history }),
   });
   if (!resp.ok) {
@@ -173,7 +179,16 @@ async function callServer(serverUrl, task, screen, history) {
   return resp.json();
 }
 
+// Guards against a second task starting while one is still mid-loop (e.g.
+// a slow step makes it look stuck, so the user clicks Run task again) -
+// without this, both loops run concurrently and interleave their logs.
+let taskInFlight = false;
+
 async function runTask(task, serverUrl) {
+  if (taskInFlight) {
+    log("a task is already running - wait for it to finish (or reload the extension) before starting another.");
+    return;
+  }
   if (!/\/agent\/step\/?$/.test(serverUrl)) {
     log(
       `Server URL looks wrong: "${serverUrl}" - expected it to end with /agent/step ` +
@@ -197,6 +212,7 @@ async function runTask(task, serverUrl) {
     actionsSucceeded: 0,
     readMsTotal: 0, // local DOM-read + redaction time only, summed across steps - excludes the Gemini round-trip
   };
+  taskInFlight = true;
   try {
     await runTaskLoop(tabId, windowId, task, serverUrl, stats);
   } finally {
@@ -207,6 +223,7 @@ async function runTask(task, serverUrl) {
     // (done, max steps, any guard/error return) since it's in `finally`.
     await clearFaceBlur(tabId);
     sendTaskSummary(stats);
+    taskInFlight = false;
   }
 }
 

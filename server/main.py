@@ -11,7 +11,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from prompt import build_prompt
@@ -29,6 +29,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Unset locally (dev/eval mode: any caller allowed). Set once deployed
+# publicly (e.g. Cloud Run) so a leaked URL can't be used by strangers to
+# spend the Gemini quota - the extension sends the same value back as
+# X-Agent-Secret. This is not real authentication (anyone can unzip the
+# extension and read it), only a filter against casual/automated abuse;
+# the actual cost backstop is the Cloud Billing budget alert.
+AGENT_SHARED_SECRET = os.environ.get("AGENT_SHARED_SECRET")
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest")
@@ -60,7 +68,10 @@ def stub_decide(req: AgentStepRequest) -> AgentAction:
 
 
 @app.post("/agent/step", response_model=AgentAction)
-async def agent_step(req: AgentStepRequest) -> AgentAction:
+async def agent_step(req: AgentStepRequest, x_agent_secret: str | None = Header(default=None)) -> AgentAction:
+    if AGENT_SHARED_SECRET and x_agent_secret != AGENT_SHARED_SECRET:
+        raise HTTPException(status_code=401, detail="missing/invalid X-Agent-Secret")
+
     if not GEMINI_API_KEY:
         action = stub_decide(req)
         log.info("STUB action=%s target_idx=%s", action.action, action.target_idx)
