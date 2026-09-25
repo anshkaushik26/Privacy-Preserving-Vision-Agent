@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Privacy-Preserving Vision Agent",
   "version": "0.1.0",
-  "description": "Reads the screen and detects faces locally, redacts PII before any network call, and only sends a sanitized context to a server-side LLM which returns the next action.",
+  "description": "Automates browser tasks from plain-language instructions while redacting passwords, card numbers and PII before any AI sees them.",
   "action": {},
   "side_panel": {
     "default_path": "popup.html"
@@ -10,8 +10,16 @@
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["scripting", "tabs", "offscreen", "storage", "sidePanel"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "scripting",
+    "tabs",
+    "offscreen",
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   }
