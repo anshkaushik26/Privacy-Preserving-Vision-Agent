@@ -219,15 +219,31 @@
   window.__agentFlashRedactPageText = function () {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
     const hits = [];
+    // Where PII-looking page text sits (viewport CSS px) and which categories
+    // matched - geometry and category names only, never the text itself. Used
+    // by the full report; plain page text is never part of the payload.
+    const found = [];
     let node;
     while ((node = walker.nextNode())) {
       const text = node.nodeValue;
       if (!text || !text.trim()) continue;
       const parent = node.parentElement;
       if (!parent || ["SCRIPT", "STYLE"].includes(parent.tagName)) continue;
-      if (Redact.redactText(text).redactions.length > 0) hits.push(parent);
+      const scan = Redact.redactText(text);
+      if (scan.redactions.length > 0) {
+        hits.push(parent);
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const r = range.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth) {
+          found.push({
+            bbox: { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) },
+            types: scan.redactions.map((x) => x.type),
+          });
+        }
+      }
     }
-    if (!hits.length) return { textNodesRedacted: 0 };
+    if (!hits.length) return { textNodesRedacted: 0, found: [] };
     if (!document.getElementById("__agent-redact-style")) {
       const style = document.createElement("style");
       style.id = "__agent-redact-style";
@@ -237,7 +253,7 @@
     }
     hits.forEach((el) => el.classList.add("__agent-redact-flash"));
     setTimeout(() => hits.forEach((el) => el.classList.remove("__agent-redact-flash")), 1800);
-    return { textNodesRedacted: hits.length };
+    return { textNodesRedacted: hits.length, found };
   };
 
   // Visual-only: briefly overlays every element already classified as
@@ -281,6 +297,26 @@
     });
 
     return { fieldsRedacted: targets.length };
+  };
+
+  // Hides this extension's own overlays (face blur, sensitive-field flash,
+  // text flash) so a screenshot taken meanwhile shows the page as the user
+  // actually saw it - the "before" image in the full report. Toggled by a class
+  // on <html> so nothing has to be removed or re-created afterwards.
+  window.__agentSetCaptureClean = function (on) {
+    let style = document.getElementById("__agent-capture-clean-style");
+    if (!style) {
+      style = document.createElement("style");
+      style.id = "__agent-capture-clean-style";
+      style.textContent =
+        "html.__agent-capture-clean .__agent-face-blur, html.__agent-capture-clean .__agent-sensitive-flash { visibility: hidden !important; }" +
+        "html.__agent-capture-clean .__agent-redact-flash { background: transparent !important; color: inherit !important; transition: none !important; }";
+      (document.head || document.documentElement).appendChild(style);
+    }
+    document.documentElement.classList.toggle("__agent-capture-clean", !!on);
+    if (!on) return true;
+    // two frames, so the screenshot is taken after the browser has repainted
+    return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))));
   };
 
   // Draws blur overlays over detected face regions (CSS px, viewport-relative).

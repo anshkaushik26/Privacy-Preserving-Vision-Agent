@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy Report</title>
+<style>
+  :root {
+    --bg: #16181d;
+    --panel: #1b1e24;
+    --border: #2a2d33;
+    --text: #e6e8eb;
+    --muted: #9aa0a8;
+    --pii: #ef4444;
+    --safe: #22c55e;
+    --img: #9ca3af;
+    --face: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    padding: 24px 28px 48px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 13px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .muted { color: var(--muted); }
+  .meta { font-size: 12px; margin: 2px 0; word-break: break-all; }
+  .tag {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 1px 8px;
+  }
+  .gate {
+    margin: 18px 0 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    border: 1px solid;
+  }
+  .gate.pass { background: #0f2a1a; border-color: #1f6a3a; color: #7ee2a0; }
+  .gate.fail { background: #2e1214; border-color: #7a2328; color: #ff9aa0; }
+  .steps { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 16px 0 0; }
+  .stepbtn.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .badge {
+    display: inline-block;
+    margin-left: 6px;
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--pii);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .stat .label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 14px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px; min-width: 0; }
+  .imgwrap { background: #0e1013; border: 1px solid var(--border); border-radius: 6px; overflow: auto; max-height: 560px; }
+  .imgwrap img, .imgwrap canvas { display: block; width: 100%; height: auto; }
+  .note { color: var(--muted); font-size: 12px; padding: 18px; }
+  pre {
+    margin: 0;
+    background: #0e1013;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    max-height: 560px;
+    overflow: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  button {
+    background: #2a2d33;
+    color: var(--text);
+    border: 1px solid #383c44;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover { background: #343841; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  ul { margin: 0; padding-left: 18px; }
+  li { margin: 3px 0; }
+  .explain { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+  footer { margin-top: 18px; display: flex; gap: 10px; align-items: center; }
+  #empty { padding: 40px 0; color: var(--muted); }
+</style>
+</head>
+<body>
+  <h1>Privacy-Preserving Vision Agent — Full Report</h1>
+  <div class="meta muted" id="source"></div>
+  <div class="meta muted" id="meta"></div>
+
+  <div id="empty" hidden>
+    No report yet. In the side panel, run a task, then come back here.
+  </div>
+
+  <main id="content" hidden>
+    <div id="steps" class="steps"></div>
+    <div id="gate" class="gate"></div>
+    <section class="stats" id="stats"></section>
+
+    <section class="grid">
+      <div class="panel">
+        <h2>Original page <span class="tag">stays on your device — never sent</span></h2>
+        <div class="imgwrap">
+          <img id="before" alt="Screenshot of the page before redaction" hidden />
+          <div id="beforeNote" class="note" hidden>No screenshot available for this report (capture failed or was too large to keep).</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>After redaction <span class="tag">what was masked</span></h2>
+        <div class="imgwrap">
+          <canvas id="after"></canvas>
+          <div id="afterNote" class="note" hidden>Needs the screenshot, which is not available for this report.</div>
+        </div>
+        <p class="explain" style="margin-top:10px">
+          A visualization. The screenshot itself is never sent; only the JSON on the right is. Sensitive text that
+          sits in the page (not in a button or field) is masked here too, but it is never read into that JSON at all.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h2>Detected elements</h2>
+        <div class="imgwrap"><canvas id="overlay"></canvas></div>
+        <div class="legend">
+          <span><i style="background:var(--pii)"></i>Sensitive field — value never read</span>
+          <span><i style="background:transparent;border:1px dashed var(--pii)"></i>Sensitive page text — never read or sent</span>
+          <span><i style="background:var(--img)"></i>Image — placeholder only</span>
+          <span><i style="background:var(--safe)"></i>Safe — sent as structure</span>
+          <span><i style="background:var(--face)"></i>Face</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Sanitized context (JSON) <button id="copy">Copy</button></h2>
+        <p class="explain">The exact request body: task, page structure and history. No pixels, no raw values.</p>
+        <pre id="json"></pre>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:14px">
+      <h2>Detection summary <span class="tag">categories and counts only — no values</span></h2>
+      <ul id="summary"></ul>
+    </section>
+
+    <footer>
+      <button id="clear">Clear report</button>
+      <span class="muted" style="font-size:12px">
+        Nothing here is saved anywhere. It is held only in the open side panel's memory and disappears when the side panel is closed.
+      </span>
+    </footer>
+  </main>
+
+  <script src="report.js"></script>
+</body>
+</html>

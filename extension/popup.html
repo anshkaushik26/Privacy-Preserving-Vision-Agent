@@ -38,6 +38,8 @@
     cursor: pointer;
   }
   button:hover { background: #1d4ed8; }
+  button.secondary { margin-top: 8px; background: #2a2d33; border: 1px solid #383c44; font-weight: 500; }
+  button.secondary:hover { background: #343841; }
   #log {
     margin-top: 14px;
     background: #0e1013;
@@ -94,6 +96,7 @@
   <textarea id="task" placeholder="e.g. Sign in, then continue to profile and checkout.">Sign in with the email test@example.com, then continue through profile to checkout.</textarea>
 
   <button id="run">Run task</button>
+  <button id="report" class="secondary">View full report</button>
   <p class="hint">Run this on the demo site (localhost). Password / card fields must be filled by you — the agent never sees or fills them.</p>
 
   <div id="summary" class="empty">No task run yet</div>

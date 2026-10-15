@@ -55,13 +55,16 @@ async function executeAction(tabId, action) {
   return result;
 }
 
+// Resolves to the PII-looking page text found ({bbox, types} per node) so the
+// report can show it; callers that only want the on-page flash ignore it.
 function flashRedactText(tabId) {
-  chrome.scripting
+  return chrome.scripting
     .executeScript({
       target: { tabId },
       func: () => window.__agentFlashRedactPageText && window.__agentFlashRedactPageText(),
     })
-    .catch(() => {});
+    .then((res) => (res && res[0] && res[0].result && res[0].result.found) || [])
+    .catch(() => []);
 }
 
 function flashRedactSensitiveFields(tabId, elements) {
@@ -95,25 +98,55 @@ async function ensureOffscreen() {
   }
 }
 
-async function runFaceBlur(tabId, windowId, devicePixelRatio) {
+// Takes one screenshot of the tab with this extension's own overlays hidden,
+// so the same image serves both the face detector and the full report's
+// "before" panel. Never rejects: resolves to null if the capture fails.
+async function captureCleanShot(tabId, windowId) {
+  const setClean = (on) =>
+    chrome.scripting
+      .executeScript({
+        target: { tabId },
+        func: (v) => window.__agentSetCaptureClean && window.__agentSetCaptureClean(v),
+        args: [on],
+      })
+      .catch(() => {});
+  await setClean(true);
   try {
-    await ensureOffscreen();
-    const dataUrl = await new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       chrome.tabs.captureVisibleTab(windowId, { format: "jpeg", quality: 70 }, (url) => {
         if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
         else resolve(url);
       });
     });
-    const resp = await chrome.runtime.sendMessage({ target: "offscreen", type: "detect-faces", dataUrl });
+  } catch (e) {
+    log("screenshot error: " + e.message);
+    return null;
+  } finally {
+    await setClean(false);
+  }
+}
+
+// Runs the on-device face detector on the screenshot. Resolves to
+// { shot, faces, facesChecked } so the report can show what was found;
+// faces are in screenshot pixels.
+async function runFaceBlur(tabId, devicePixelRatio, shotPromise) {
+  const out = { shot: null, faces: [], facesChecked: false };
+  try {
+    out.shot = await shotPromise;
+    if (!out.shot) return out;
+    await ensureOffscreen();
+    const resp = await chrome.runtime.sendMessage({ target: "offscreen", type: "detect-faces", dataUrl: out.shot });
     if (!resp || resp.error) {
       log("face detection skipped: " + (resp && resp.error));
-      return;
+      return out;
     }
-    const dpr = devicePixelRatio || 1;
-    const boxesCss = resp.boxes.map((b) => ({ x: b.x / dpr, y: b.y / dpr, w: b.w / dpr, h: b.h / dpr }));
+    out.faces = resp.boxes;
+    out.facesChecked = true;
     if (resp.boxes.length) {
       log(`local face detector: ${resp.boxes.length} face(s) found in ${resp.inferenceMs.toFixed(0)}ms (blurred on-screen, no pixels sent to server)`);
     }
+    const dpr = devicePixelRatio || 1;
+    const boxesCss = resp.boxes.map((b) => ({ x: b.x / dpr, y: b.y / dpr, w: b.w / dpr, h: b.h / dpr }));
     await chrome.scripting.executeScript({
       target: { tabId },
       func: (boxes) => window.__agentDrawFaceBlur && window.__agentDrawFaceBlur(boxes),
@@ -122,6 +155,51 @@ async function runFaceBlur(tabId, windowId, devicePixelRatio) {
   } catch (e) {
     log("face detection error: " + e.message);
   }
+  return out;
+}
+
+// --- "View full report" -------------------------------------------------------
+// The report is never stored: nothing here writes to browser storage or disk.
+// Each step is broadcast once to the open extension pages - the side panel keeps
+// the latest task in its own memory and the report tab renders it. If no page is
+// listening, the step is simply dropped.
+function startReport(task) {
+  chrome.runtime.sendMessage({ type: "report-reset", task }).catch(() => {});
+}
+
+// payloadJson is the exact string that was sent - only included when the leak
+// check passed. Box geometry and pageText carry no label text, so they are
+// safe either way.
+async function saveReport({ step, screen, payloadJson, leak, readMs, face, textHits }) {
+  const payload = leak.passed && payloadJson ? JSON.parse(payloadJson) : null;
+  const boxes = screen.elements.map((e) => ({ idx: e.idx, tag: e.tag, sensitive: e.sensitive, filled: e.filled, bbox: e.bbox }));
+  const [f, found] = await Promise.all([face, textHits]);
+  // PII-looking page text not already inside an element we flagged. Shown in
+  // the report only: plain page text is never read into the payload.
+  const flagged = boxes.filter((b) => b.sensitive && b.sensitive !== "image" && b.bbox);
+  const pageText = (found || []).filter((h) => {
+    const cx = h.bbox.x + h.bbox.w / 2;
+    const cy = h.bbox.y + h.bbox.h / 2;
+    return !flagged.some((b) => cx >= b.bbox.x && cx <= b.bbox.x + b.bbox.w && cy >= b.bbox.y && cy <= b.bbox.y + b.bbox.h);
+  });
+  const stepReport = {
+    step,
+    capturedAt: Date.now(),
+    url: leak.passed ? screen.url : "(withheld: leak check failed)",
+    title: leak.passed ? screen.title : "",
+    viewport: screen.viewport,
+    devicePixelRatio: screen.devicePixelRatio,
+    readMs,
+    leak,
+    payload,
+    payloadBytes: payload ? payloadJson.length : null,
+    boxes,
+    pageText,
+    screenshot: f.shot,
+    faces: f.faces,
+    facesChecked: f.facesChecked,
+  };
+  chrome.runtime.sendMessage({ type: "report-step", step: stepReport }).catch(() => {});
 }
 
 function tallyByCategory(elements) {
@@ -213,6 +291,7 @@ async function runTask(task, serverUrl) {
     readMsTotal: 0, // local DOM-read + redaction time only, summed across steps - excludes the Gemini round-trip
   };
   taskInFlight = true;
+  startReport(task);
   try {
     await runTaskLoop(tabId, windowId, task, serverUrl, stats);
   } finally {
@@ -273,9 +352,13 @@ async function runTaskLoop(tabId, windowId, task, serverUrl, stats) {
     const nSensitive = screen.elements.filter((e) => e.sensitive).length;
     log(`step ${step + 1}: read ${screen.elements.length} elements (${nSensitive} redacted: ${formatTally(tally)}) on ${screen.url} in ${readMs.toFixed(0)}ms`);
 
-    flashRedactText(tabId);
+    // The screenshot is started before the flash overlays below so it never
+    // waits on them (and hides them anyway) - not awaited, so the loop below
+    // does not slow down: the face pass and the report both consume it later.
+    const shotPromise = captureCleanShot(tabId, windowId);
+    const textPromise = flashRedactText(tabId);
     flashRedactSensitiveFields(tabId, screen.elements); // covers form field values (card/password/phone/id), not just page text
-    runFaceBlur(tabId, windowId, screen.devicePixelRatio); // fire-and-forget, visual only
+    const facePromise = runFaceBlur(tabId, screen.devicePixelRatio, shotPromise); // fire-and-forget, visual only
 
     // Final gate before anything leaves the browser: re-scan the fully
     // serialized outgoing payload for raw PII patterns using the same rules
@@ -295,6 +378,15 @@ async function runTaskLoop(tabId, windowId, task, serverUrl, stats) {
       // local log. Checks page-level fields too, not just element labels -
       // that's exactly what the title/url leak (fixed in content_script.js)
       // would otherwise have hidden from this diagnostic.
+      saveReport({
+        step: step + 1,
+        screen,
+        payloadJson: null,
+        leak: { passed: false, findings: leakCheck.redactions.map((r) => ({ type: r.type, count: r.count })) },
+        readMs,
+        face: facePromise,
+        textHits: textPromise,
+      }).catch(() => {});
       if (Redact.redactText(screen.title || "").redactions.length) log("    culprit: screen.title");
       if (Redact.redactText(screen.url || "").redactions.length) log("    culprit: screen.url");
       for (const el of screen.elements) {
@@ -309,6 +401,18 @@ async function runTaskLoop(tabId, windowId, task, serverUrl, stats) {
     }
     log(`  leak check: 0 raw PII patterns in outgoing payload (${outgoingPayload.length} bytes) - safe to send`);
     stats.bytesSent += outgoingPayload.length;
+    // For the "View full report" page: the exact bytes just sent, plus the
+    // screenshot, face boxes and page-text hits once those finish. Sent to the
+    // open pages only, never stored. Not awaited.
+    saveReport({
+      step: step + 1,
+      screen,
+      payloadJson: outgoingPayload,
+      leak: { passed: true, findings: [] },
+      readMs,
+      face: facePromise,
+      textHits: textPromise,
+    }).catch(() => {});
 
     const t1 = performance.now();
     let action;

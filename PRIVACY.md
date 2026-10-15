@@ -1,6 +1,6 @@
 # Privacy Policy — TSE (Privacy-Preserving Vision Agent)
 
-**Last updated:** September 2026
+**Last updated:** October 2026
 
 TSE is a Chrome extension built for Smart India Hackathon 2026 (Problem Statement
 26171). It lets you type a task in plain language (e.g. "compose an email to my
@@ -20,8 +20,11 @@ an on-device face-detection model.
   numbers, bank details, API keys, and about a dozen other categories — is
   detected and dropped locally. These values are never transmitted in any form.
 - **Screenshots and images** never leave your device. Face detection runs fully
-  in-browser (via WebAssembly); only the resulting on-screen blur is drawn
-  locally, and the image itself is discarded afterward.
+  in-browser (via WebAssembly) and the image is never sent anywhere.
+- **The "View full report" page** shows the most recent step of your last task.
+  The screenshot and detection results it displays are held only in the open
+  side panel's memory. They are never saved to disk or to any browser storage,
+  never transmitted, and disappear when you close the side panel.
 - A second, independent check re-scans the entire outgoing message immediately
   before it is sent, as a safety net.
 

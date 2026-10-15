@@ -32,9 +32,29 @@ function renderSummary(data) {
   `;
 }
 
-chrome.runtime.onMessage.addListener((msg) => {
+// The full report's data lives only here, in this page's memory (never in any
+// storage): background.js broadcasts each step, and report.html asks for it.
+// Closing the side panel discards it.
+let reportMeta = null;
+let reportSteps = [];
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "log") appendLine(msg.message);
   if (msg.type === "summary") renderSummary(msg.data);
+  if (msg.type === "report-reset") {
+    reportMeta = { task: msg.task };
+    reportSteps = [];
+  }
+  if (msg.type === "report-step") reportSteps[msg.step.step - 1] = msg.step;
+  if (msg.type === "report-clear") {
+    reportMeta = null;
+    reportSteps = [];
+  }
+  if (msg.type === "report-get") sendResponse({ meta: reportMeta, steps: reportSteps.filter(Boolean) });
+});
+
+document.getElementById("report").addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("report.html") });
 });
 
 runBtn.addEventListener("click", () => {
