@@ -2,3 +2,11 @@
 __pycache__
 *.pyc
 .env
+tests
+pytest.ini
+pyproject.toml
+requirements-dev.txt
+requirements.in
+.mypy_cache
+.ruff_cache
+.pytest_cache

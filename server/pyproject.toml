@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, import order, bugbear
+select = ["E", "F", "I", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["main.py", "prompt.py", "schema.py"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+check_untyped_defs = true

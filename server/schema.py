@@ -3,6 +3,7 @@
 These mirror exactly what extension/content_script.js serializes, so keep the
 two in sync if you change one.
 """
+
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel

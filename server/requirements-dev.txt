@@ -1,0 +1,12 @@
+# Test and code-quality tooling (pinned). Install with: pip install -r requirements-dev.txt
+-r requirements.txt
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.7.0
+pygments==2.21.0
+pytest==9.1.1
+librt==0.16.0
+mypy==2.4.0
+mypy-extensions==1.1.0
+pathspec==1.1.1
+ruff==0.17.2

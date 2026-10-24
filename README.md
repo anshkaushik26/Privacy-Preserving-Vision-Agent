@@ -41,6 +41,19 @@ cp .env.example .env        # add your GEMINI_API_KEY
 
 Then put `http://127.0.0.1:8787/agent/step` in the extension's server URL field.
 
+## Development
+
+```bash
+cd server
+python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
+.venv/bin/ruff check . && .venv/bin/ruff format --check . && .venv/bin/mypy && .venv/bin/pytest
+cd .. && node eval/run_redaction_eval.js     # redaction regression suite (exits non-zero on any miss)
+```
+
+CI (`.github/workflows/ci.yml`) runs the same checks on every push. Server tests never call Gemini and ignore any real key in your environment.
+
+**Dependencies.** `server/requirements.in` lists the direct dependencies; `server/requirements.txt` is the fully pinned set the Docker image installs (the versions the live Cloud Run revision was built with). To upgrade, change `requirements.in`, resolve and test in a clean Python 3.12 environment, then update `requirements.txt` (Dependabot opens weekly PRs for this). `extension/lib/` holds vendored ONNX Runtime and the face model; their versions are not tracked yet.
+
 ## Status and limits
 
 - Detection is rule-based and best-effort, with no formal guarantee. The 76-case test suite was written by the same team as the rules, so it is a regression suite, not an independent accuracy measure.

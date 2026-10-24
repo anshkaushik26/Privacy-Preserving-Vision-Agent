@@ -1,6 +1,7 @@
 """Builds the prompt sent to Gemini. The model only ever sees the sanitized
 screen state below - no raw passwords, card numbers, emails, phone numbers,
 government IDs, or image pixels ever reach this point."""
+
 from schema import AgentStepRequest
 
 SYSTEM_PREAMBLE = """You are a browser automation agent. You are given a sanitized, \
@@ -87,7 +88,7 @@ def render_history(history) -> str:
             status = f"ok, BUT: {r.get('warning')}"
         else:
             status = "ok"
-        lines.append(f'- {a.get("action")} #{a.get("target_idx")} value={a.get("value")!r} -> {status}')
+        lines.append(f"- {a.get('action')} #{a.get('target_idx')} value={a.get('value')!r} -> {status}")
     return "\n".join(lines)
 
 

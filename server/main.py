@@ -6,6 +6,7 @@ an API key.
 Reads GEMINI_API_KEY from the environment, or from a `.env` file next to this
 script (see .env.example). Run with: uvicorn main:app --port 8787 --reload
 """
+
 import json
 import logging
 import os
@@ -61,9 +62,18 @@ def stub_decide(req: AgentStepRequest) -> AgentAction:
         if el.sensitive or el.idx in used:
             continue
         if el.tag in ("button", "a") or (el.tag == "input" and el.type == "submit"):
-            return AgentAction(action="click", target_idx=el.idx, reasoning="stub mode: first available button (set GEMINI_API_KEY for real reasoning)")
+            return AgentAction(
+                action="click",
+                target_idx=el.idx,
+                reasoning="stub mode: first available button (set GEMINI_API_KEY for real reasoning)",
+            )
         if el.tag == "input" and el.type in (None, "text", "email"):
-            return AgentAction(action="type", target_idx=el.idx, value="test@example.com", reasoning="stub mode: fill first text field")
+            return AgentAction(
+                action="type",
+                target_idx=el.idx,
+                value="test@example.com",
+                reasoning="stub mode: fill first text field",
+            )
     return AgentAction(action="done", reasoning="stub mode: nothing safe left to do")
 
 

@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 .DS_Store
 tse-extension.zip
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.zip
