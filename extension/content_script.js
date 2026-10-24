@@ -7,6 +7,7 @@
   const SELECTOR =
     'input, textarea, select, button, a[href], [role="button"], [role="link"], [onclick], [contenteditable="true"], [role="textbox"]';
 
+  // Checks if a DOM element has non-zero geometry and is visible in the viewport.
   function isVisible(el) {
     const rect = el.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) return false;
